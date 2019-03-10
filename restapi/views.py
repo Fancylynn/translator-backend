@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from .models import TranslateHistory
 from .serializers import TranslateHistorySerializer
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 
 # Imports the Google Cloud client library
@@ -25,15 +25,25 @@ class TranslatorViewSet(viewsets.ModelViewSet):
     
     # Get a specific translation record
     def retrieve(self, request, pk=None):
-        queryset = TranslateHistory.objects.get(id=pk)
+        try:
+            queryset = TranslateHistory.objects.get(id=pk)
+        except:
+            return Response('The target translation does not exist!', status.HTTP_404_NOT_FOUND) 
         serializer = TranslateHistorySerializer(queryset)
         return Response(serializer.data)
     
-    def create(self, request):     
+    # Create a new translation with given input information
+    def create(self, request):
+
+        if request.POST.get('input_text').strip() == '':
+            return Response('Input content cannot be empty!', status.HTTP_400_BAD_REQUEST)
+             
         input_text = request.POST.get('input_text')
+
         # Do google translation
         translation = self.googleTranslate(input_text)
 
+        # Create a record for the translation
         new_translation = TranslateHistory.objects.create(
             input_text = input_text,
             language = translation['detectedSourceLanguage'],
@@ -47,10 +57,6 @@ class TranslatorViewSet(viewsets.ModelViewSet):
     def googleTranslate(self, text):
         # Instantiates a client
         translate_client = translate.Client()
-        # if isinstance(text, six.binary_type):
-        #     text = text.decode('utf-8')
-        
-        print(text)
-        # translate_client = translate_client.from_service_account_json(os.path.abspath('../apikey.json'))
+        # Translate into English
         translation = translate_client.translate(text, target_language='en')
         return translation
