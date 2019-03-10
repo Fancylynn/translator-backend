@@ -129,7 +129,3 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
-
-# Google API key
-# GOOGLE_
-CLOUD_API_KEY = 'AIzaSyDCO6-G4R06ABK2VN-ziHa_fSJGmfBQhA4'
